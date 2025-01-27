@@ -4,10 +4,25 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
-func Running(cppCode string) (string, error) {
+func decodeEscapedString(input string) string {
+	// C++ 코드에서 따옴표 제거
+	input = strings.Trim(input, "\"")
+	// \n -> 개행 문자, \t -> 탭 문자, \\ -> 역슬래시
+	replacer := strings.NewReplacer(
+		"\\n", "\n",
+		"\\t", "\t",
+		"\\\\", "\\",
+		"\\\"", "\"",
+	)
+	return replacer.Replace(input)
+}
 
+func Running(cppCode string) (string, error) {
+	// C++ 코드 디코딩
+	cppCode = decodeEscapedString(cppCode)
 	// 임시 파일 생성
 	tmpFile, err := os.CreateTemp("", "example-*.cpp")
 	if err != nil {
