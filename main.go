@@ -73,7 +73,6 @@ func main() {
 					Body:        []byte(res),
 				},
 			)
-
 			if err != nil {
 				log.Fatalf("Failed to publish a message: %v", err)
 			}
