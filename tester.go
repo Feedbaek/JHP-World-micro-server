@@ -48,7 +48,7 @@ func Running(cppCode string, input string, output string) (string, error) {
 	fmt.Println("Output: ", string(runOutput))
 
 	if strings.TrimSpace(string(runOutput)) != strings.TrimSpace(output) {
-		return string(runOutput), fmt.Errorf("Expected output: %s, but got: %s", output, runOutput)
+		return fmt.Sprintf("<< Expected output >>\n%s\n<< Your output >>\n%s", output, runOutput), fmt.Errorf("Output mismatch")
 	}
 
 	return string(runOutput), nil
