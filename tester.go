@@ -7,22 +7,7 @@ import (
 	"strings"
 )
 
-func decodeEscapedString(input string) string {
-	// C++ 코드에서 따옴표 제거
-	input = strings.Trim(input, "\"")
-	// \n -> 개행 문자, \t -> 탭 문자, \\ -> 역슬래시
-	replacer := strings.NewReplacer(
-		"\\n", "\n",
-		"\\t", "\t",
-		"\\\\", "\\",
-		"\\\"", "\"",
-	)
-	return replacer.Replace(input)
-}
-
-func Running(cppCode string) (string, error) {
-	// C++ 코드 디코딩
-	cppCode = decodeEscapedString(cppCode)
+func Running(cppCode string, input string, output string) (string, error) {
 	// 임시 파일 생성
 	tmpFile, err := os.CreateTemp("", "example-*.cpp")
 	if err != nil {
@@ -45,17 +30,25 @@ func Running(cppCode string) (string, error) {
 	fmt.Println("Compiling the C++ code...")
 	cmd := exec.Command("g++", tmpFile.Name(), "-o", outputFile)
 	// CombinedOutput을 사용하여 표준 출력과 표준 에러를 모두 캡처
-	output, err := cmd.CombinedOutput()
+	compileOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		return string(output), err
+		return string(compileOutput), err
 	}
 
 	// 컴파일된 바이너리 실행
-	fmt.Println("Compilation successful! Executing the binary...")
 	runCmd := exec.Command(outputFile)
+	// input을 표준 입력으로 전달
+	runCmd.Stdin = strings.NewReader(input)
+
 	runOutput, runErr := runCmd.CombinedOutput()
 	if runErr != nil {
 		return string(runOutput), runErr
+	}
+
+	fmt.Println("Output: ", string(runOutput))
+
+	if strings.TrimSpace(string(runOutput)) != strings.TrimSpace(output) {
+		return string(runOutput), fmt.Errorf("Expected output: %s, but got: %s", output, runOutput)
 	}
 
 	return string(runOutput), nil

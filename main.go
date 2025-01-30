@@ -4,13 +4,24 @@ import (
 	"log"
 	"context"
 	"time"
+	"encoding/json"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // 요청 데이터를 담을 구조체 정의
 type CodeRequest struct {
-	Code string `json:"code"`
+	GradeId int64  `json:"gradeId"`
+	Input   string `json:"input"`
+	Output  string `json:"output"`
+	Code    string `json:"code"`
+}
+
+// 응답 데이터를 담을 구조체 정의
+type CodeResponse struct {
+	GradeId int64 `json:"gradeId"`
+	Success bool `json:"success"`
+	Result string `json:"result"`
 }
 
 const (
@@ -55,8 +66,36 @@ func main() {
 	go func() {
 		for msg := range msgs {
 			log.Printf("\n<Received a message>\n %s", msg.Body)
-			res, _ := Running(string(msg.Body))
+
+			// 요청 데이터 파싱
+			var codeReq CodeRequest
+			err := json.Unmarshal(msg.Body, &codeReq)
+			if err != nil {
+				log.Fatalf("Failed to unmarshal the message: %v", err)
+				continue
+			}
+
+			res, err := Running(codeReq.Code, codeReq.Input, codeReq.Output)
 			log.Printf("\n<Result>\n %s", res)
+
+			var success bool = true
+			if err != nil {
+				success = false
+			}
+
+			// 응답 데이터 생성
+			codeRes := CodeResponse {
+				GradeId: codeReq.GradeId,
+				Success: success,
+				Result: res,
+			}
+
+			// 응답 데이터 JSON으로 변환
+			resData, err := json.Marshal(codeRes)
+			if err != nil {
+				log.Fatalf("Failed to marshal the message: %v", err)
+				continue
+			}
 
 			// 메시지 전송
 			ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
@@ -70,7 +109,7 @@ func main() {
 				false,     // Immediate
 				amqp.Publishing{
 					ContentType: "application/json",
-					Body:        []byte(res),
+					Body:        resData,
 				},
 			)
 			if err != nil {
