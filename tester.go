@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"context"
+	"time"
 )
 
 func Running(cppCode string, input string, output string) (string, error) {
@@ -26,17 +28,32 @@ func Running(cppCode string, input string, output string) (string, error) {
 
 	defer os.Remove(outputFile) // 사용 후 파일 삭제
 
+	// 3초 후 타임아웃 되는 context 생성
+	ctx3, cancel3 := context.WithTimeout(context.Background(), 3 * time.Second)
+	defer cancel3()
+
 	// g++ 컴파일 명령 실행
 	fmt.Println("Compiling the C++ code...")
-	cmd := exec.Command("g++", tmpFile.Name(), "-o", outputFile)
+	cmd := exec.CommandContext(ctx3, "g++", tmpFile.Name(), "-o", outputFile)
 	// CombinedOutput을 사용하여 표준 출력과 표준 에러를 모두 캡처
 	compileOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		return string(compileOutput), err
 	}
 
+	// 1초 후 타임아웃 되는 context 생성
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 1 * time.Second)
+	defer cancel1()
+
 	// 컴파일된 바이너리 실행
-	runCmd := exec.Command(outputFile)
+	fmt.Println("Running the compiled binary...")
+	runCmd := exec.CommandContext(ctx1, "prlimit",
+	"--as=134217728",  // 메모리 128MB
+	"--fsize=0",  // 만들 수 있는 파일 크기 0MB
+	"--nofile=4",  // 사용하는 파일 4개
+	"--nproc=0",  // 자식 프로세스 0개
+	"--", outputFile)
+
 	// input을 표준 입력으로 전달
 	runCmd.Stdin = strings.NewReader(input)
 

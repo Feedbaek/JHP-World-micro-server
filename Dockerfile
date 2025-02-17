@@ -4,8 +4,8 @@ FROM golang:1.22-alpine
 WORKDIR /app
 COPY . .
 
-# install g++
-RUN apk add --no-cache g++
+# install packages
+RUN apk add --no-cache g++ util-linux
 
 # go mod
 RUN go mod tidy && go build -o go_is_awesome
