@@ -1,0 +1,12 @@
+{
+	"defaultAction": "SCMP_ACT_ALLOW",
+	"architectures": [
+	  "SCMP_ARCH_X86_64"
+	],
+	"syscalls": [
+	  {
+		"names": ["fork", "vfork", "open", "execveat", "execv", "execvp", "execvpe", "execl", "execlp", "execle", "execvpe", "execveat", "execvpe"],
+		"action": "SCMP_ACT_ERRNO"
+	  }
+	]
+  }

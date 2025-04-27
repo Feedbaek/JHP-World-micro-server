@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 	"encoding/json"
-
+	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -81,6 +81,8 @@ func main() {
 			var success bool = true
 			if err != nil {
 				success = false
+				fmt.Println(err)
+				res = err.Error()
 			}
 
 			// 응답 데이터 생성

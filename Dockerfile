@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 # install packages
-RUN apk add --no-cache g++ util-linux
+RUN apk add g++ util-linux
 
 # go mod
 RUN go mod tidy && go build -o go_is_awesome
